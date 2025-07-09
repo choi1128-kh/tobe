@@ -42,6 +42,18 @@ function formatNumber(num) {
     return new Intl.NumberFormat('ko-KR').format(num);
 }
 
+// 모바일 화면 크기에 따른 라벨 폰트 크기 조정
+function getDataLabelFontSize() {
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 480) {
+        return 10; // 모바일
+    } else if (screenWidth < 768) {
+        return 11; // 태블릿
+    } else {
+        return 12; // 데스크톱
+    }
+}
+
 // 통계 계산 함수들
 function calculateTotalIncome() {
     return financialData.reduce((total, item) => total + item.수입액, 0);
@@ -200,6 +212,19 @@ function createPersonChart() {
                             return `${context.label}: ₩${formatNumber(value)} (${percentage}%)`;
                         }
                     }
+                },
+                datalabels: {
+                    display: true,
+                    color: 'white',
+                    font: {
+                        weight: 'bold',
+                        size: getDataLabelFontSize()
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return percentage + '%';
+                    }
                 }
             }
         }
@@ -296,6 +321,19 @@ function createPaymentMethodChart() {
                             return `${context.label}: ₩${formatNumber(value)} (${percentage}%)`;
                         }
                     }
+                },
+                datalabels: {
+                    display: true,
+                    color: 'white',
+                    font: {
+                        weight: 'bold',
+                        size: getDataLabelFontSize()
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return percentage + '%';
+                    }
                 }
             }
         }
@@ -343,6 +381,19 @@ function createCombinedCategoryChart() {
                             const percentage = ((value / total) * 100).toFixed(1);
                             return `${context.label}: ₩${formatNumber(value)} (${percentage}%)`;
                         }
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    color: 'white',
+                    font: {
+                        weight: 'bold',
+                        size: getDataLabelFontSize()
+                    },
+                    formatter: function(value, context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return percentage + '%';
                     }
                 }
             }
