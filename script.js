@@ -160,6 +160,52 @@ let currentMode = 'asis';
 let categoryChart = null;
 let paymentChart = null;
 
+// 현재 적용된 사람 필터
+let currentPersonFilter = 'all';
+
+// 사람별 필터 적용 함수
+function applyPersonFilter() {
+    const filterSelect = document.getElementById('personFilter');
+    currentPersonFilter = filterSelect.value;
+    
+    console.log('필터 적용:', currentPersonFilter); // 디버깅용
+    
+    // 기존 차트 클리어
+    if (categoryChart) {
+        categoryChart.destroy();
+        categoryChart = null;
+    }
+    if (paymentChart) {
+        paymentChart.destroy();
+        paymentChart = null;
+    }
+    
+    // 상세내역 컨테이너 클리어
+    document.getElementById('categoryBreakdown').innerHTML = '';
+    document.getElementById('paymentBreakdown').innerHTML = '';
+    
+    // 필터링된 데이터로 차트와 상세내역만 업데이트
+    createCategoryChart();
+    createPaymentMethodChart();
+    createCategoryBreakdown();
+    createPaymentMethodBreakdown();
+}
+
+// 필터링된 데이터 반환 함수
+function getFilteredData() {
+    console.log('현재 필터:', currentPersonFilter);
+    console.log('전체 데이터 개수:', financialData.length);
+    
+    if (currentPersonFilter === 'all') {
+        console.log('전체 데이터 반환');
+        return financialData;
+    }
+    
+    const filtered = financialData.filter(item => item.사람 === currentPersonFilter);
+    console.log('필터링된 데이터 개수:', filtered.length);
+    return filtered;
+}
+
 // 데이터 전환 함수
 function switchDataMode(mode) {
     currentMode = mode;
@@ -175,6 +221,7 @@ function updateModeDisplay() {
     const modeButtons = document.querySelectorAll('.mode-btn');
     const lastUpdate = document.getElementById('lastUpdate');
     const dataVersion = document.getElementById('dataVersion');
+    const filterSelect = document.getElementById('personFilter');
     
     modeButtons.forEach(btn => {
         btn.classList.remove('active');
@@ -189,6 +236,11 @@ function updateModeDisplay() {
     } else {
         lastUpdate.textContent = '2025.01.02';
         dataVersion.textContent = 'To-Be (목표)';
+    }
+    
+    // 필터 상태 유지
+    if (filterSelect) {
+        filterSelect.value = currentPersonFilter;
     }
 }
 
@@ -299,10 +351,11 @@ function calculatePersonStats() {
     return personStats;
 }
 
-function calculateCategoryStats() {
+function calculateCategoryStats(useFilter = false) {
     const categoryStats = {};
+    const dataToUse = useFilter ? getFilteredData() : financialData;
     
-    financialData.forEach(item => {
+    dataToUse.forEach(item => {
         if (item.구분 !== '수입' && item.지출액 > 0) {
             if (!categoryStats[item.구분]) {
                 categoryStats[item.구분] = {
@@ -324,10 +377,11 @@ function calculateCategoryStats() {
 }
 
 // 수단별 지출 분석 함수
-function calculatePaymentMethodStats() {
+function calculatePaymentMethodStats(useFilter = false) {
     const paymentStats = {};
+    const dataToUse = useFilter ? getFilteredData() : financialData;
     
-    financialData.forEach(item => {
+    dataToUse.forEach(item => {
         if (item.구분 !== '수입' && item.지출액 > 0 && item.수단) {
             if (!paymentStats[item.수단]) {
                 paymentStats[item.수단] = {
@@ -354,7 +408,7 @@ function calculatePaymentMethodStats() {
 // 차트 생성 함수들
 function createCategoryChart() {
     const ctx = document.getElementById('categoryChart').getContext('2d');
-    const categoryStats = calculateCategoryStats();
+    const categoryStats = calculateCategoryStats(true);
     
     const labels = Object.keys(categoryStats);
     const data = labels.map(category => categoryStats[category].총액);
@@ -403,7 +457,7 @@ function createCategoryChart() {
 // 수단별 차트 생성 (바차트, 내림차순)
 function createPaymentMethodChart() {
     const ctx = document.getElementById('paymentChart').getContext('2d');
-    const paymentStats = calculatePaymentMethodStats();
+    const paymentStats = calculatePaymentMethodStats(true);
     
     // 내림차순으로 정렬
     const sortedEntries = Object.entries(paymentStats)
@@ -538,7 +592,7 @@ function createPaymentMethodTable() {
 
 // 구분별 상세 분석 카드 생성
 function createCategoryBreakdown() {
-    const categoryStats = calculateCategoryStats();
+    const categoryStats = calculateCategoryStats(true);
     const container = document.getElementById('categoryBreakdown');
     
     Object.entries(categoryStats).forEach(([category, stats]) => {
@@ -570,7 +624,7 @@ function createCategoryBreakdown() {
 
 // 수단별 상세 분석 카드 생성
 function createPaymentMethodBreakdown() {
-    const paymentStats = calculatePaymentMethodStats();
+    const paymentStats = calculatePaymentMethodStats(true);
     const container = document.getElementById('paymentBreakdown');
     
     Object.entries(paymentStats).forEach(([method, stats]) => {

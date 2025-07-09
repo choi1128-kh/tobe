@@ -118,6 +118,50 @@
             color: #9E9E9E;
         }
 
+        .filter-container {
+            margin-top: 20px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-container label {
+            font-weight: 600;
+            margin-right: 15px;
+            color: #333;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .filter-container label i {
+            margin-right: 8px;
+            color: #667eea;
+        }
+
+        #personFilter {
+            padding: 8px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+            outline: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        #personFilter:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #personFilter:hover {
+            border-color: #667eea;
+        }
+
         .summary-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -547,6 +591,23 @@
                 margin-top: 20px;
                 padding: 10px;
             }
+
+            .filter-container {
+                padding: 10px;
+                margin-top: 15px;
+            }
+
+            .filter-container label {
+                display: block;
+                margin-bottom: 8px;
+                margin-right: 0;
+                font-size: 0.9rem;
+            }
+
+            #personFilter {
+                width: 100%;
+                font-size: 0.9rem;
+            }
             
             .section-title {
                 font-size: 1.1rem;
@@ -709,6 +770,16 @@
             <div class="header" style="margin-bottom: 30px;">
                 <h2><i class="fas fa-list-ul"></i> 상세내역</h2>
                 <p>각 구분별, 수단별 세부 항목들을 확인하세요</p>
+                
+                <!-- 사람별 필터 -->
+                <div class="filter-container">
+                    <label for="personFilter"><i class="fas fa-filter"></i> 사람별 필터:</label>
+                    <select id="personFilter" onchange="applyPersonFilter()">
+                        <option value="all">정민+지민 (전체)</option>
+                        <option value="정민">정민</option>
+                        <option value="지민">지민</option>
+                    </select>
+                </div>
             </div>
             
             <div class="subsection">
