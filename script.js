@@ -417,13 +417,17 @@ function createCategoryChart() {
     const labels = Object.keys(categoryStats);
     const data = labels.map(category => categoryStats[category].총액);
     const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'];
-    
+    // 내림차순으로 정렬
+    const sortedEntries = Object.entries(categoryStats)
+        .sort((a, b) => b[1].총액 - a[1].총액);
+    const sortedLabels = sortedEntries.map(entry => entry[0]);
+    const sortedData = sortedEntries.map(entry => entry[1].총액);
     categoryChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: sortedLabels,
             datasets: [{
-                data: data,
+                data: sortedData,
                 backgroundColor: colors,
                 borderWidth: 0,
                 borderRadius: 8
