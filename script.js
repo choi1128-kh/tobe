@@ -1,3 +1,80 @@
+// 리더라인 전용 데이터 라벨 플러그인 (금액 + 리더 라인)
+const dataLabelPlugin = {
+    id: 'dataLabel',
+    afterDatasetsDraw(chart, args, options) {
+        const { ctx, data, chartArea } = chart;
+        ctx.save();
+        
+        data.datasets.forEach((dataset, i) => {
+            const meta = chart.getDatasetMeta(i);
+            if (!meta.hidden && (chart.config.type === 'pie' || chart.config.type === 'doughnut')) {
+                meta.data.forEach((element, index) => {
+                    // 데이터 값과 라벨 계산
+                    const dataValue = dataset.data[index];
+                    const label = data.labels[index];
+                    const formattedValue = `₩${formatNumber(dataValue)}`;
+                    
+                    // 세그먼트 각도 계산
+                    const startAngle = element.startAngle;
+                    const endAngle = element.endAngle;
+                    const midAngle = (startAngle + endAngle) / 2;
+                    
+                    // 차트 중심점과 반지름
+                    const centerX = element.x;
+                    const centerY = element.y;
+                    const outerRadius = element.outerRadius;
+                    
+                    // 폰트 설정
+                    const fontSize = getDataLabelFontSize();
+                    ctx.font = `bold ${fontSize}px Arial`;
+                    
+                    // 모든 라벨을 외부에 리더 라인과 함께 표시
+                    const lineEndRadius = outerRadius + 15;
+                    const labelRadius = outerRadius + 50;
+                    
+                    const lineEndX = centerX + Math.cos(midAngle) * lineEndRadius;
+                    const lineEndY = centerY + Math.sin(midAngle) * lineEndRadius;
+                    
+                    const labelX = centerX + Math.cos(midAngle) * labelRadius;
+                    const labelY = centerY + Math.sin(midAngle) * labelRadius;
+                    
+                    // 텍스트 정렬 조정 (좌우 균형 맞춤)
+                    const isRightSide = Math.cos(midAngle) > 0;
+                    const finalLabelX = isRightSide ? labelX + 30 : labelX - 30;
+                    
+                    // 리더 라인 그리기 (세그먼트 → 중간점 → 라벨)
+                    ctx.strokeStyle = '#666';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    // 세그먼트 가장자리에서 시작
+                    ctx.moveTo(centerX + Math.cos(midAngle) * outerRadius, centerY + Math.sin(midAngle) * outerRadius);
+                    // 중간 연결점
+                    ctx.lineTo(lineEndX, lineEndY);
+                    // 라벨 쪽으로 수평선
+                    ctx.lineTo(finalLabelX - (isRightSide ? 10 : -10), labelY);
+                    ctx.stroke();
+                    
+                    // 금액 텍스트 그리기
+                    ctx.textAlign = isRightSide ? 'left' : 'right';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(formattedValue, finalLabelX, labelY - 8);
+                    
+                    // 라벨명 그리기 (작은 글씨로)
+                    ctx.font = `${fontSize - 2}px Arial`;
+                    ctx.fillStyle = '#666';
+                    ctx.fillText(label, finalLabelX, labelY + 8);
+                });
+            }
+        });
+        
+        ctx.restore();
+    }
+};
+
+// 플러그인 등록
+Chart.register(dataLabelPlugin);
+
 // 가계부 데이터
 const financialData = [
     // 정민 데이터
@@ -144,93 +221,9 @@ function calculatePaymentMethodStats() {
     return paymentStats;
 }
 
-// 사람별 구분 없이 통합된 구분별 통계
-function calculateCombinedCategoryStats() {
-    const combinedStats = {};
-    
-    financialData.forEach(item => {
-        if (item.구분 !== '수입' && item.지출액 > 0) {
-            if (!combinedStats[item.구분]) {
-                combinedStats[item.구분] = {
-                    총액: 0,
-                    항목별: {}
-                };
-            }
-            
-            combinedStats[item.구분].총액 += item.지출액;
-            
-            // 항목별 합계 계산
-            if (!combinedStats[item.구분].항목별[item.항목]) {
-                combinedStats[item.구분].항목별[item.항목] = 0;
-            }
-            combinedStats[item.구분].항목별[item.항목] += item.지출액;
-        }
-    });
-    
-    return combinedStats;
-}
+
 
 // 차트 생성 함수들
-function createPersonChart() {
-    const ctx = document.getElementById('personChart').getContext('2d');
-    const personStats = calculatePersonStats();
-    
-    const labels = Object.keys(personStats);
-    const data = labels.map(person => personStats[person].지출액);
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'];
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        font: {
-                            size: 14
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.parsed;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${context.label}: ₩${formatNumber(value)} (${percentage}%)`;
-                        }
-                    }
-                },
-                datalabels: {
-                    display: true,
-                    color: 'white',
-                    font: {
-                        weight: 'bold',
-                        size: getDataLabelFontSize()
-                    },
-                    formatter: function(value, context) {
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return percentage + '%';
-                    }
-                }
-            }
-        }
-    });
-}
-
 function createCategoryChart() {
     const ctx = document.getElementById('categoryChart').getContext('2d');
     const categoryStats = calculateCategoryStats();
@@ -279,24 +272,28 @@ function createCategoryChart() {
     });
 }
 
-// 수단별 차트 생성
+// 수단별 차트 생성 (바차트, 내림차순)
 function createPaymentMethodChart() {
     const ctx = document.getElementById('paymentChart').getContext('2d');
     const paymentStats = calculatePaymentMethodStats();
     
-    const labels = Object.keys(paymentStats);
-    const data = labels.map(method => paymentStats[method].총액);
+    // 내림차순으로 정렬
+    const sortedEntries = Object.entries(paymentStats)
+        .sort((a, b) => b[1].총액 - a[1].총액);
+    
+    const labels = sortedEntries.map(entry => entry[0]);
+    const data = sortedEntries.map(entry => entry[1].총액);
     const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#A8E6CF', '#FFB6C1'];
     
     new Chart(ctx, {
-        type: 'pie',
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 data: data,
                 backgroundColor: colors,
                 borderWidth: 0,
-                hoverOffset: 10
+                borderRadius: 8
             }]
         },
         options: {
@@ -304,96 +301,25 @@ function createPaymentMethodChart() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        font: {
-                            size: 14
-                        }
-                    }
+                    display: false
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const value = context.parsed;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${context.label}: ₩${formatNumber(value)} (${percentage}%)`;
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed.y / total) * 100).toFixed(1);
+                            return `${context.label}: ₩${formatNumber(context.parsed.y)} (${percentage}%)`;
                         }
-                    }
-                },
-                datalabels: {
-                    display: true,
-                    color: 'white',
-                    font: {
-                        weight: 'bold',
-                        size: getDataLabelFontSize()
-                    },
-                    formatter: function(value, context) {
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return percentage + '%';
                     }
                 }
-            }
-        }
-    });
-}
-
-// 통합 구분별 차트 생성
-function createCombinedCategoryChart() {
-    const ctx = document.getElementById('combinedCategoryChart').getContext('2d');
-    const combinedStats = calculateCombinedCategoryStats();
-    
-    const labels = Object.keys(combinedStats);
-    const data = labels.map(category => combinedStats[category].총액);
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#A8E6CF'];
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        font: {
-                            size: 14
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₩' + formatNumber(value);
                         }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const value = context.parsed;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${context.label}: ₩${formatNumber(value)} (${percentage}%)`;
-                        }
-                    }
-                },
-                datalabels: {
-                    display: true,
-                    color: 'white',
-                    font: {
-                        weight: 'bold',
-                        size: getDataLabelFontSize()
-                    },
-                    formatter: function(value, context) {
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return percentage + '%';
                     }
                 }
             }
@@ -406,6 +332,7 @@ function createPersonTable() {
     const personStats = calculatePersonStats();
     const tbody = document.getElementById('personTable');
     
+    // 개별 사람별 데이터 추가
     Object.entries(personStats).forEach(([person, stats]) => {
         const row = document.createElement('tr');
         const netAmount = stats.수입액 - stats.지출액;
@@ -419,21 +346,39 @@ function createPersonTable() {
         
         tbody.appendChild(row);
     });
+    
+    // 합계 row 추가
+    const totalExpense = calculateTotalExpense();
+    const totalIncome = calculateTotalIncome();
+    const totalNetAmount = totalIncome - totalExpense;
+    
+    const totalRow = document.createElement('tr');
+    totalRow.style.borderTop = '2px solid #333';
+    totalRow.style.fontWeight = 'bold';
+    totalRow.innerHTML = `
+        <td>합계</td>
+        <td class="amount negative">₩${formatNumber(totalExpense)}</td>
+        <td class="amount positive">₩${formatNumber(totalIncome)}</td>
+        <td class="amount ${totalNetAmount >= 0 ? 'positive' : 'negative'}">₩${formatNumber(totalNetAmount)}</td>
+    `;
+    
+    tbody.appendChild(totalRow);
 }
 
 function createCategoryTable() {
     const categoryStats = calculateCategoryStats();
     const tbody = document.getElementById('categoryTable');
-    const totalExpense = calculateTotalExpense();
     
-    Object.entries(categoryStats).forEach(([category, stats]) => {
+    // 내림차순으로 정렬
+    const sortedEntries = Object.entries(categoryStats)
+        .sort((a, b) => b[1].총액 - a[1].총액);
+    
+    sortedEntries.forEach(([category, stats]) => {
         const row = document.createElement('tr');
-        const percentage = ((stats.총액 / totalExpense) * 100).toFixed(1);
         
         row.innerHTML = `
             <td>${category}</td>
             <td class="amount negative">₩${formatNumber(stats.총액)}</td>
-            <td>${percentage}%</td>
         `;
         
         tbody.appendChild(row);
@@ -444,41 +389,24 @@ function createCategoryTable() {
 function createPaymentMethodTable() {
     const paymentStats = calculatePaymentMethodStats();
     const tbody = document.getElementById('paymentTable');
-    const totalExpense = calculateTotalExpense();
     
-    Object.entries(paymentStats).forEach(([method, stats]) => {
+    // 내림차순으로 정렬
+    const sortedEntries = Object.entries(paymentStats)
+        .sort((a, b) => b[1].총액 - a[1].총액);
+    
+    sortedEntries.forEach(([method, stats]) => {
         const row = document.createElement('tr');
-        const percentage = ((stats.총액 / totalExpense) * 100).toFixed(1);
         
         row.innerHTML = `
             <td>${method}</td>
             <td class="amount negative">₩${formatNumber(stats.총액)}</td>
-            <td>${percentage}%</td>
         `;
         
         tbody.appendChild(row);
     });
 }
 
-// 통합 구분별 테이블 생성
-function createCombinedCategoryTable() {
-    const combinedStats = calculateCombinedCategoryStats();
-    const tbody = document.getElementById('combinedCategoryTable');
-    const totalExpense = calculateTotalExpense();
-    
-    Object.entries(combinedStats).forEach(([category, stats]) => {
-        const row = document.createElement('tr');
-        const percentage = ((stats.총액 / totalExpense) * 100).toFixed(1);
-        
-        row.innerHTML = `
-            <td>${category}</td>
-            <td class="amount negative">₩${formatNumber(stats.총액)}</td>
-            <td>${percentage}%</td>
-        `;
-        
-        tbody.appendChild(row);
-    });
-}
+
 
 // 구분별 상세 분석 카드 생성
 function createCategoryBreakdown() {
@@ -544,37 +472,7 @@ function createPaymentMethodBreakdown() {
     });
 }
 
-// 통합 구분별 상세 분석 카드 생성
-function createCombinedCategoryBreakdown() {
-    const combinedStats = calculateCombinedCategoryStats();
-    const container = document.getElementById('combinedBreakdown');
-    
-    Object.entries(combinedStats).forEach(([category, stats]) => {
-        const card = document.createElement('div');
-        card.className = 'category-card';
-        
-        const itemsHtml = Object.entries(stats.항목별)
-            .sort((a, b) => b[1] - a[1])
-            .map(([item, amount]) => `
-                <li>
-                    <span>${item}</span>
-                    <span>₩${formatNumber(amount)}</span>
-                </li>
-            `).join('');
-        
-        card.innerHTML = `
-            <div class="category-header">
-                <div class="category-name">${category} (통합)</div>
-                <div class="category-total">₩${formatNumber(stats.총액)}</div>
-            </div>
-            <ul class="category-items">
-                ${itemsHtml}
-            </ul>
-        `;
-        
-        container.appendChild(card);
-    });
-}
+
 
 // 요약 카드 업데이트
 function updateSummaryCards() {
@@ -598,17 +496,13 @@ function updateSummaryCards() {
 // 초기화 함수
 function init() {
     updateSummaryCards();
-    createPersonChart();
     createCategoryChart();
     createPaymentMethodChart();
-    createCombinedCategoryChart();
     createPersonTable();
     createCategoryTable();
     createPaymentMethodTable();
-    createCombinedCategoryTable();
     createCategoryBreakdown();
     createPaymentMethodBreakdown();
-    createCombinedCategoryBreakdown();
 }
 
 // 페이지 로드 시 초기화
