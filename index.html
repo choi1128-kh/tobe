@@ -48,6 +48,76 @@
             opacity: 0.9;
         }
 
+        .update-info {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .update-date, .data-version {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        #lastUpdate, #dataVersion {
+            font-weight: bold;
+            color: #FFE082;
+        }
+
+        .mode-toggle {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: #FFE082;
+            box-shadow: 0 5px 15px rgba(255, 224, 130, 0.3);
+        }
+
+        .change-indicator {
+            font-size: 0.8rem;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .change-up {
+            color: #FF5722;
+        }
+
+        .change-down {
+            color: #4CAF50;
+        }
+
+        .change-neutral {
+            color: #9E9E9E;
+        }
+
         .summary-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -316,6 +386,22 @@
             .header p {
                 font-size: 1rem;
             }
+
+            .update-info {
+                flex-direction: column;
+                gap: 10px;
+                font-size: 0.8rem;
+            }
+
+            .mode-toggle {
+                margin-top: 15px;
+                gap: 10px;
+            }
+
+            .mode-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
             
             .card {
                 padding: 20px;
@@ -375,6 +461,25 @@
             
             .header p {
                 font-size: 0.9rem;
+            }
+
+            .update-info {
+                gap: 8px;
+                font-size: 0.75rem;
+            }
+
+            .update-date, .data-version {
+                padding: 3px 12px;
+            }
+
+            .mode-toggle {
+                margin-top: 10px;
+                gap: 8px;
+            }
+
+            .mode-btn {
+                padding: 6px 12px;
+                font-size: 0.75rem;
             }
             
             .card {
@@ -493,6 +598,18 @@
         <div class="header">
             <h1><i class="fas fa-chart-line"></i> 가계부 분석 대시보드</h1>
             <p>정민 & 지민의 재정 현황을 한눈에 확인하세요</p>
+            <div class="update-info">
+                <span class="update-date">최종 업데이트: <span id="lastUpdate">2024.12.30</span></span>
+                <span class="data-version">데이터 버전: <span id="dataVersion">As-Is (현재)</span></span>
+            </div>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="asis" onclick="switchDataMode('asis')">
+                    <i class="fas fa-database"></i> As-Is (현재)
+                </button>
+                <button class="mode-btn" data-mode="tobe" onclick="switchDataMode('tobe')">
+                    <i class="fas fa-target"></i> To-Be (목표)
+                </button>
+            </div>
         </div>
 
         <div class="summary-cards">
