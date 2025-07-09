@@ -108,6 +108,14 @@
             color: #666;
             font-weight: 600;
         }
+        
+        .mobile-title {
+            display: none;
+        }
+        
+        .desktop-title {
+            display: inline;
+        }
 
         .card-value {
             font-size: 2rem;
@@ -251,17 +259,183 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .dashboard {
+                padding: 15px;
+                border-radius: 10px;
+            }
+            
             .charts-container,
             .detailed-tables {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
             
             .summary-cards {
                 grid-template-columns: 1fr;
+                gap: 15px;
             }
             
             .header h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .card-value {
+                font-size: 1.8rem;
+            }
+            
+            .chart-card,
+            .table-card {
+                padding: 15px;
+            }
+            
+            .chart-title,
+            .table-title {
+                font-size: 1.1rem;
+            }
+            
+            .category-breakdown {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .category-card {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .dashboard {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .card-icon {
+                font-size: 1.5rem;
+            }
+            
+            .card-title {
+                font-size: 1rem;
+            }
+            
+            .desktop-title {
+                display: none;
+            }
+            
+            .mobile-title {
+                display: inline;
+            }
+            
+            .card-value {
+                font-size: 1.5rem;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .chart-card,
+            .table-card {
+                padding: 10px;
+            }
+            
+            .chart-title,
+            .table-title {
+                font-size: 1rem;
+                margin-bottom: 15px;
+            }
+            
+            .data-table {
+                font-size: 0.9rem;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px 6px;
+            }
+            
+            .category-name {
+                font-size: 1rem;
+            }
+            
+            .category-total {
+                font-size: 1.1rem;
+            }
+            
+            .category-items li {
+                padding: 6px 0;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* 테이블 스크롤 처리 */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 터치 인터랙션 개선 */
+        .card, .chart-card, .table-card, .category-card {
+            touch-action: manipulation;
+        }
+        
+        /* 모바일 스크롤바 숨기기 */
+        .table-wrapper::-webkit-scrollbar {
+            height: 3px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        @media (max-width: 640px) {
+            .data-table {
+                min-width: 300px;
+            }
+            
+            .table-wrapper::-webkit-scrollbar {
+                height: 2px;
             }
         }
     </style>
@@ -291,7 +465,10 @@
             <div class="card balance">
                 <div class="card-header">
                     <i class="fas fa-balance-scale card-icon"></i>
-                    <div class="card-title">여윳돈(이걸로 생활해야됨)</div>
+                    <div class="card-title">
+                        <span class="desktop-title">여윳돈(이걸로 생활해야됨)</span>
+                        <span class="mobile-title">여윳돈</span>
+                    </div>
                 </div>
                 <div class="card-value" id="balance">₩0</div>
             </div>
@@ -315,32 +492,36 @@
         <div class="detailed-tables">
             <div class="table-card">
                 <div class="table-title">사람별 상세 내역</div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>이름</th>
-                            <th>지출액</th>
-                            <th>수입액</th>
-                            <th>순액</th>
-                        </tr>
-                    </thead>
-                    <tbody id="personTable">
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>이름</th>
+                                <th>지출액</th>
+                                <th>수입액</th>
+                                <th>순액</th>
+                            </tr>
+                        </thead>
+                        <tbody id="personTable">
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="table-card">
                 <div class="table-title">구분별 상세 내역</div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>구분</th>
-                            <th>금액</th>
-                            <th>비율</th>
-                        </tr>
-                    </thead>
-                    <tbody id="categoryTable">
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>구분</th>
+                                <th>금액</th>
+                                <th>비율</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryTable">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
