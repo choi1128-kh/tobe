@@ -489,6 +489,21 @@
             </div>
         </div>
 
+        <div class="charts-container">
+            <div class="chart-card">
+                <div class="chart-title">수단별 지출 분포</div>
+                <div class="chart-container">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">통합 구분별 지출 분포</div>
+                <div class="chart-container">
+                    <canvas id="combinedCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="detailed-tables">
             <div class="table-card">
                 <div class="table-title">사람별 상세 내역</div>
@@ -525,7 +540,48 @@
             </div>
         </div>
 
+        <div class="detailed-tables">
+            <div class="table-card">
+                <div class="table-title">수단별 상세 내역</div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>수단</th>
+                                <th>금액</th>
+                                <th>비율</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-card">
+                <div class="table-title">통합 구분별 상세 내역</div>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>구분</th>
+                                <th>금액</th>
+                                <th>비율</th>
+                            </tr>
+                        </thead>
+                        <tbody id="combinedCategoryTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="category-breakdown" id="categoryBreakdown">
+        </div>
+
+        <div class="category-breakdown" id="paymentBreakdown">
+        </div>
+
+        <div class="category-breakdown" id="combinedBreakdown">
         </div>
     </div>
 
