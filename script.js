@@ -92,8 +92,12 @@ let currentPersonFilter = 'all';
 // JSON 데이터 로드 함수
 async function loadFinancialData() {
     try {
-        const response = await fetch('data.json');
+        const response = await fetch('/api/data');
         const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
         
         financialDataAsis = data.asis;
         financialDataTobe = data.tobe;
@@ -117,20 +121,24 @@ async function saveFinancialData() {
             tobe: financialDataTobe
         };
         
-        // 파일 다운로드 방식으로 구현
-        const dataStr = JSON.stringify(dataToSave, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'data.json';
-        link.click();
-        URL.revokeObjectURL(url);
+        const response = await fetch('/api/data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataToSave)
+        });
         
-        alert('데이터가 저장되었습니다. 다운로드된 data.json 파일을 프로젝트 폴더에 복사하세요.');
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('데이터가 성공적으로 저장되었습니다! 🎉');
+        } else {
+            throw new Error(result.error || '저장에 실패했습니다.');
+        }
     } catch (error) {
         console.error('데이터 저장 실패:', error);
-        alert('데이터 저장에 실패했습니다.');
+        alert(`데이터 저장에 실패했습니다: ${error.message}`);
     }
 }
 
@@ -141,12 +149,12 @@ function toggleEditMode() {
     const saveBtn = document.getElementById('saveBtn');
     
     if (isEditMode) {
-        editBtn.textContent = '편집 취소';
+        editBtn.innerHTML = '<i class="fas fa-times"></i> 편집 취소';
         editBtn.style.backgroundColor = '#f44336';
         saveBtn.style.display = 'inline-block';
         showDataEditor();
     } else {
-        editBtn.textContent = '데이터 편집';
+        editBtn.innerHTML = '<i class="fas fa-edit"></i> 데이터 편집';
         editBtn.style.backgroundColor = '#4CAF50';
         saveBtn.style.display = 'none';
         hideDataEditor();
@@ -194,6 +202,9 @@ function createEditorModal() {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2>데이터 편집기 (${currentMode === 'asis' ? 'As-Is' : 'To-Be'})</h2>
                 <div>
+                    <button onclick="saveDataDirectly()" style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        <i class="fas fa-save"></i> 저장하기
+                    </button>
                     <button onclick="addNewItem()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 10px; cursor: pointer;">새 항목 추가</button>
                     <button onclick="hideDataEditor()" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">닫기</button>
                 </div>
@@ -266,10 +277,6 @@ function populateDataEditor() {
     html += `
             </tbody>
         </table>
-        <div style="text-align: center; margin-top: 20px;">
-            <button onclick="applyDataChanges()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">변경사항 적용</button>
-            <button onclick="resetDataChanges()" style="background: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">변경사항 취소</button>
-        </div>
     `;
     
     content.innerHTML = html;
@@ -314,6 +321,53 @@ function applyDataChanges() {
     updateAllViews();
     
     alert('변경사항이 적용되었습니다.');
+}
+
+// 데이터 직접 저장 (편집 모달 내에서)
+async function saveDataDirectly() {
+    try {
+        // 현재 데이터 업데이트
+        financialData = currentMode === 'asis' ? financialDataAsis : financialDataTobe;
+        
+        // UI 업데이트
+        updateAllViews();
+        
+        // 서버에 저장
+        const dataToSave = {
+            asis: financialDataAsis,
+            tobe: financialDataTobe
+        };
+        
+        const response = await fetch('/api/data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(dataToSave)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('데이터가 성공적으로 저장되었습니다! 🎉');
+            
+            // 편집 모드 완전히 종료
+            isEditMode = false;
+            const editBtn = document.getElementById('editBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            
+            editBtn.innerHTML = '<i class="fas fa-edit"></i> 데이터 편집';
+            editBtn.style.backgroundColor = '#4CAF50';
+            saveBtn.style.display = 'none';
+            
+            hideDataEditor(); // 모달 닫기
+        } else {
+            throw new Error(result.error || '저장에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('데이터 저장 실패:', error);
+        alert(`데이터 저장에 실패했습니다: ${error.message}`);
+    }
 }
 
 // 변경사항 취소
