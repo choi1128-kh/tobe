@@ -92,25 +92,71 @@ let currentPersonFilter = 'all';
 // JSON 데이터 로드 함수
 async function loadFinancialData() {
     try {
-        const response = await fetch('/api/data');
-        const data = await response.json();
+        // 먼저 API 서버에서 데이터 로드 시도
+        let response = await fetch('/api/data');
+        let data;
         
-        if (data.error) {
-            throw new Error(data.error);
+        if (response.ok) {
+            // API 서버가 있는 경우 (로컬 환경)
+            data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            financialDataAsis = data.asis;
+            financialDataTobe = data.tobe;
+            console.log('API 서버에서 데이터 로드 완료');
+        } else {
+            // API 서버가 없는 경우 (배포 환경) - 정적 파일에서 로드
+            response = await fetch('/data.json');
+            if (!response.ok) {
+                throw new Error('데이터 파일을 찾을 수 없습니다.');
+            }
+            
+            data = await response.json();
+            financialDataAsis = data.asis;
+            financialDataTobe = data.tobe;
+            console.log('정적 파일에서 데이터 로드 완료');
         }
         
-        financialDataAsis = data.asis;
-        financialDataTobe = data.tobe;
         financialData = financialDataAsis; // 기본값: As-Is
-        
         console.log('데이터 로드 완료:', financialData.length, '개 항목');
+        
+        // 편집 버튼 표시/숨김 처리
+        updateEditButtonVisibility();
         
         // 데이터 로드 완료 후 UI 초기화
         init();
     } catch (error) {
         console.error('데이터 로드 실패:', error);
-        alert('데이터를 불러오는데 실패했습니다.');
+        alert('데이터를 불러오는데 실패했습니다: ' + error.message);
     }
+}
+
+// 편집 버튼 표시/숨김 함수
+function updateEditButtonVisibility() {
+    const editBtn = document.getElementById('editBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    // API 서버가 있는지 확인
+    fetch('/api/data')
+        .then(response => {
+            if (response.ok) {
+                // API 서버가 있음 - 편집 버튼 표시
+                if (editBtn) editBtn.style.display = 'inline-block';
+                if (saveBtn) saveBtn.style.display = 'none';
+            } else {
+                // API 서버가 없음 - 편집 버튼 숨김
+                if (editBtn) editBtn.style.display = 'none';
+                if (saveBtn) saveBtn.style.display = 'none';
+            }
+        })
+        .catch(() => {
+            // API 서버가 없음 - 편집 버튼 숨김
+            if (editBtn) editBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'none';
+        });
 }
 
 // 데이터 저장 함수
