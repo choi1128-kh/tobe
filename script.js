@@ -109,7 +109,7 @@ async function loadFinancialData() {
             console.log('API 서버에서 데이터 로드 완료');
         } else {
             // API 서버가 없는 경우 (배포 환경) - 정적 파일에서 로드
-            response = await fetch('/data.json');
+            response = await fetch('./data.json');
             if (!response.ok) {
                 throw new Error('데이터 파일을 찾을 수 없습니다.');
             }
