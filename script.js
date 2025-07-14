@@ -92,23 +92,40 @@ let currentPersonFilter = 'all';
 // JSON 데이터 로드 함수
 async function loadFinancialData() {
     try {
-        // 먼저 API 서버에서 데이터 로드 시도
-        let response = await fetch('/api/data');
+        let response;
         let data;
         
-        if (response.ok) {
-            // API 서버가 있는 경우 (로컬 환경)
-            data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // 로컬 환경 - API 서버에서 데이터 로드 시도
+            try {
+                response = await fetch('/api/data');
+                if (response.ok) {
+                    data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    financialDataAsis = data.asis;
+                    financialDataTobe = data.tobe;
+                    console.log('API 서버에서 데이터 로드 완료');
+                } else {
+                    throw new Error('API 서버 응답 오류');
+                }
+            } catch (apiError) {
+                console.log('API 서버 연결 실패, 정적 파일로 fallback');
+                response = await fetch('./data.json');
+                if (!response.ok) {
+                    throw new Error('데이터 파일을 찾을 수 없습니다.');
+                }
+                
+                data = await response.json();
+                financialDataAsis = data.asis;
+                financialDataTobe = data.tobe;
+                console.log('정적 파일에서 데이터 로드 완료');
             }
-            
-            financialDataAsis = data.asis;
-            financialDataTobe = data.tobe;
-            console.log('API 서버에서 데이터 로드 완료');
         } else {
-            // API 서버가 없는 경우 (배포 환경) - 정적 파일에서 로드
+            // 배포 환경 - 정적 파일에서 바로 로드
             response = await fetch('./data.json');
             if (!response.ok) {
                 throw new Error('데이터 파일을 찾을 수 없습니다.');
@@ -139,24 +156,31 @@ function updateEditButtonVisibility() {
     const editBtn = document.getElementById('editBtn');
     const saveBtn = document.getElementById('saveBtn');
     
-    // API 서버가 있는지 확인
-    fetch('/api/data')
-        .then(response => {
-            if (response.ok) {
-                // API 서버가 있음 - 편집 버튼 표시
-                if (editBtn) editBtn.style.display = 'inline-block';
-                if (saveBtn) saveBtn.style.display = 'none';
-            } else {
+    // 배포 환경에서는 편집 버튼 숨김
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // 로컬 환경 - API 서버가 있는지 확인
+        fetch('/api/data')
+            .then(response => {
+                if (response.ok) {
+                    // API 서버가 있음 - 편집 버튼 표시
+                    if (editBtn) editBtn.style.display = 'inline-block';
+                    if (saveBtn) saveBtn.style.display = 'none';
+                } else {
+                    // API 서버가 없음 - 편집 버튼 숨김
+                    if (editBtn) editBtn.style.display = 'none';
+                    if (saveBtn) saveBtn.style.display = 'none';
+                }
+            })
+            .catch(() => {
                 // API 서버가 없음 - 편집 버튼 숨김
                 if (editBtn) editBtn.style.display = 'none';
                 if (saveBtn) saveBtn.style.display = 'none';
-            }
-        })
-        .catch(() => {
-            // API 서버가 없음 - 편집 버튼 숨김
-            if (editBtn) editBtn.style.display = 'none';
-            if (saveBtn) saveBtn.style.display = 'none';
-        });
+            });
+    } else {
+        // 배포 환경 - 편집 버튼 숨김
+        if (editBtn) editBtn.style.display = 'none';
+        if (saveBtn) saveBtn.style.display = 'none';
+    }
 }
 
 // 데이터 저장 함수
